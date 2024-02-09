@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "fair-visualization-metrics"
+version = "0.1.0"
+description = "Graphics visualization of the WATERVERSE FAIR Implementation Profile questionnaire results"
+authors = ["Fernando López Aguilar <fernando.lopez@fiware.org>"]
+license = "Apache2.0"
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.26.4"
+matplotlib = "^3.8.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
