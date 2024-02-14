@@ -14,7 +14,7 @@ def scaling(data: float, rmin: float, rmax: float, tmin: float, tmax: float) -> 
     will scale m linearly into [tmin,tmax] as desired.
     """
 
-    
+
     #
     # To go step by step,
     #
