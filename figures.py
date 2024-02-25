@@ -11,7 +11,7 @@ def example_data():
         },
         'Accessible': {
             'labels': ['RDA-A1-01M', 'RDA-A1-02M', 'RDA-A1-02D', 'RDA-A1-03M', 'RDA-A1-03D', 'RDA-A1-04M',
-                       'RDA-A1-04D', 'RDA-A1-05D', 'RDA-A1.1-01M', 'RDA-A1.1-01D', 'RDA-A1.2-01D', 'RDA-A2-01M' ],
+                       'RDA-A1-04D', 'RDA-A1-05D', 'RDA-A1.1-01M', 'RDA-A1.1-01D', 'RDA-A1.2-01D', 'RDA-A2-01M'],
             'data': [1, 2, 3, 4, 5, 2, 3, 4, 3, 2, 1, 1]
         },
         'Interoperable': {
@@ -32,7 +32,9 @@ def example_data():
 if __name__ == '__main__':
     data = example_data()
     gph = Graphics(data=data)
+
     gph.create_first_figure()
     gph.create_second_figure()
+    gph.pie_chart()
 
     plt.show()

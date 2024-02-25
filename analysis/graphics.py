@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from analysis.radar import radar_factory
+import numpy as np
 
 
 class Graphics:
@@ -107,3 +108,40 @@ class Graphics:
         # Set the limits for the x-axis and y-axis
         ax.set_xlim([-1.25, (column_width + column_distance) * 4 - column_distance + column_width])
         ax.set_ylim([-0.5, num_divisions + 1])
+
+    def pie_chart(self):
+        def func(pct, allvals):
+            absolute = int(np.round(pct / 100. * np.sum(allvals)))
+            return f"{absolute:d}\n({pct:.1f}%)"
+
+        # Data for the pie chart
+        labels = ['Essential', 'Important', 'Useful']
+        sizes = [7, 20, 14]
+
+        # Create the figure and axes
+        fig, ax = plt.subplots()
+
+        # Generate the pie chart
+        wedges, texts, autotexts = ax.pie(sizes,
+                                          autopct=lambda pct: func(pct, sizes),
+                                          shadow=True,
+                                          startangle=90,
+                                          textprops=dict(weight="bold", color="black", size="large"))
+
+        # Add a title
+        ax.set_title('Distribution of priorities')
+
+        # legend
+        ax.legend(wedges, labels,
+                  loc="center left",
+                  bbox_to_anchor=(1, 0, 0.5, 1))
+
+        # Add number and percentage labels
+        for text, autotext in zip(texts, autotexts):
+            percentage = autotext.get_text()
+            value = text.get_text()
+            # ax.text3D(0, 0, 1, f'{value}\n{percentage}', ha='center', va='center')
+            # ax.text3D(0, 0, 1, f'{label}\n{size}\n{percentage}', ha='center', va='center')
+
+        # Hide the x-axis and y-axis
+        ax.axis('off')
