@@ -17,15 +17,14 @@ def radar_factory(num_vars, frame='circle'):
     ----------
     num_vars : int
         Number of variables for radar chart.
-    frame : {'circle', 'polygon'}
+    frame : {'circle' | 'polygon'}
         Shape of frame surrounding axes.
 
     """
     # calculate evenly-spaced axis angles
-    theta = np.linspace(0, 2*np.pi, num_vars, endpoint=False)
+    theta = np.linspace(0, 2 * np.pi, num_vars, endpoint=False)
 
     class RadarTransform(PolarAxes.PolarTransform):
-
         def transform_path_non_affine(self, path):
             # Paths with non-unit interpolation steps correspond to gridlines,
             # in which case we force interpolation (to defeat PolarTransform's
@@ -51,34 +50,43 @@ def radar_factory(num_vars, frame='circle'):
             """Override plot so that line is closed by default"""
             lines = super().plot(*args, **kwargs)
             for line in lines:
-                self.__close_line__(line)
+                self._close_line(line)
 
-        @staticmethod
-        def __close_line__(line):
+        def _close_line(self, line):
             x, y = line.get_data()
             # FIXME: markers at x[0], y[0] get doubled-up
             if x[0] != x[-1]:
-                x = np.append(x, x[0])
-                y = np.append(y, y[0])
+                #x = np.append(x, x[0])
+                #y = np.append(y, y[0])
+                x = np.concatenate((x, [x[0]]))
+                y = np.concatenate((y, [y[0]]))
+
                 line.set_data(x, y)
 
         def set_varlabels(self, labels):
             new_theta = np.linspace(0, 2*np.pi, len(labels), endpoint=False)
             self.set_thetagrids(np.degrees(new_theta), labels)
+            #self.set_thetagrids(np.degrees(theta), labels)
 
-        @staticmethod
-        def __gen_axes_patch__():
+        def _gen_axes_patch(self):
             # The Axes patch must be centered at (0.5, 0.5) and of radius 0.5
             # in axes coordinates.
             if frame == 'circle':
                 return Circle((0.5, 0.5), 0.5)
             elif frame == 'polygon':
-                return RegularPolygon((0.5, 0.5), num_vars,
-                                      radius=.5, edgecolor="k")
+                return RegularPolygon((0.5, 0.5), num_vars, radius=.5, edgecolor="k")
             else:
-                raise ValueError("Unknown value for 'frame': %s" % frame)
+                raise ValueError(f"Unknown value for 'frame': {frame}")
 
-        def __gen_axes_spines__(self):
+        def draw(self, renderer):
+            """ Draw. If frame is polygon, make gridlines polygon-shaped """
+            if frame == 'polygon':
+                gridlines = self.yaxis.get_gridlines()
+                for gl in gridlines:
+                    gl.get_path()._interpolation_steps = num_vars
+            super().draw(renderer)
+
+        def _gen_axes_spines(self):
             if frame == 'circle':
                 return super()._gen_axes_spines()
             elif frame == 'polygon':
@@ -87,13 +95,39 @@ def radar_factory(num_vars, frame='circle'):
                               spine_type='circle',
                               path=Path.unit_regular_polygon(num_vars))
                 # unit_regular_polygon gives a polygon of radius 1 centered at
-                # (0, 0) but we want a polygon of radius 0.5 centered at (0.5,
-                # 0.5) in axes coordinates.
-                spine.set_transform(Affine2D().scale(.5).translate(.5, .5)
-                                    + self.transAxes)
+                # (0, 0) but we want a polygon of radius 0.5 centered at (0.5, 0.5) in axes coordinates.
+                spine.set_transform(Affine2D().scale(.5).translate(.5, .5) + self.transAxes)
                 return {'polar': spine}
             else:
                 raise ValueError("Unknown value for 'frame': %s" % frame)
 
     register_projection(RadarAxes)
+
     return theta
+
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
+    data = [['Sulfate', 'Nitrate', 'EC', 'OC1', 'OC2', 'OC3', 'OP', 'CO'],
+            ('Basecase', [
+                [0.01, 0.01, 0.02, 0.71, 0.74, 0.70, 0.00, 0.00]])]
+
+    N = len(data[0])
+    theta = radar_factory(N, frame='polygon')
+
+    spoke_labels = data.pop(0)
+    title, case_data = data[0]
+
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(projection='radar'))
+    fig.subplots_adjust(top=0.85, bottom=0.05)
+
+    ax.set_rgrids([0.2, 0.4, 0.6, 0.8])
+    ax.set_title(title, position=(0.5, 1.1), ha='center')
+
+    for d in case_data:
+        line = ax.plot(theta, d)
+        ax.fill(theta, d, alpha=0.25, label='_nolegend_')
+    ax.set_varlabels(spoke_labels)
+
+    plt.show()

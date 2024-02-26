@@ -16,9 +16,11 @@ class Data(object):
         self.fair_maturity_model_data = dict()
         self.FMMClassification_data = dict()
         self.FMMClassification_data_length = int()
+        self.fairness_classification_per_indicator = dict()
 
         self.get_fair_maturity_model()
         self.get_fdm_classification()
+        self.get_fairness_classification_per_indicator()
 
     def get_fair_maturity_model(self) -> None:
         fair_maturity_model = {
@@ -65,7 +67,7 @@ class Data(object):
             'FDMIU1[SQ005]': 'RDA-I3-04M'
         }
 
-        self.fair_maturity_model_data = {fair_maturity_model[key]: self.raw_data['responses'][0][key]
+        self.fair_maturity_model_data = {fair_maturity_model[key]: int(self.raw_data['responses'][0][key])
                                          for key in fair_maturity_model.keys()}
 
     def get_fdm_classification(self) -> None:
@@ -86,21 +88,21 @@ class Data(object):
         }
 
         self.FMMClassification_data = {
-            'Essential': {key: self.fair_maturity_model_data[key] for key in fmm_classification['Essential']},
-            'Important': {key: self.fair_maturity_model_data[key] for key in fmm_classification['Important']},
-            'Useful': {key: self.fair_maturity_model_data[key] for key in fmm_classification['Useful']}
+            'Essential': self.__classification_per_category__(classes=fmm_classification, category='Essential'),
+            'Important': self.__classification_per_category__(classes=fmm_classification, category='Important'),
+            'Useful': self.__classification_per_category__(classes=fmm_classification, category='Useful')
         }
 
         self.FMMClassification_data_length = {
-            'Essential': len(self.FMMClassification_data['Essential']),
-            'Important': len(self.FMMClassification_data['Important']),
-            'Useful': len(self.FMMClassification_data['Useful'])
+            'Essential': self.__len_classification_per_category__(category='Essential'),
+            'Important': self.__len_classification_per_category__(category='Important'),
+            'Useful': self.__len_classification_per_category__(category='Useful')
         }
 
-        print(self.__classification__('RDA-F1-01M'))
-        print(1)
+    def get_fairness_classification_per_indicator(self):
+        self.fairness_classification_per_indicator = self.__classification_per_indicator__()
 
-    def __classification__(self, key: str) -> str:
+    def __classification_per_category__(self, classes: dict, category: str) -> dict:
         result = {
             'F': 'Findable',
             'A': 'Accessible',
@@ -108,25 +110,51 @@ class Data(object):
             'R': 'Reusable'
         }
 
-        res = self.pattern.findall(key)
+        # Create the structure
+        aux1 = {x: dict() for x in [result[x] for x in result]}
+        aux2 = {key: self.fair_maturity_model_data[key] for key in classes[category]}
 
-        if res is not None:
-            return result[res[0]]
-        else:
-            raise Exception("Sorry, no numbers below zero")
+        for key, value in aux2.items():
+            category = self.pattern.findall(key)
 
-        # import re
-        #
-        # regex = r"RDA-([FAIR]).+-.*"
-        #
-        # matches = re.finditer(regex, key, re.MULTILINE)
-        #
-        # for matchNum, match in enumerate(matches, start=1):
-        #     for groupNum in range(0, len(match.groups())):
-        #         groupNum = groupNum + 1
-        #         return match.group(groupNum)
+            if category is None:
+                raise Exception(f"Sorry, key is not expected: {key}")
+
+            aux1[result[category[0]]][key] = value
+
+        return aux1
+
+    def __len_classification_per_category__(self, category: str) -> int:
+        value = sum([len(self.FMMClassification_data[category][x]) for x in self.FMMClassification_data[category]])
+        return value
+
+    def __classification_per_indicator__(self) -> dict:
+        result = {
+            'F': 'Findable',
+            'A': 'Accessible',
+            'I': 'Interoperable',
+            'R': 'Reusable'
+        }
+
+        final_data = {
+            'Findable': dict(),
+            'Accessible': dict(),
+            'Interoperable': dict(),
+            'Reusable': dict()
+
+        }
+
+        for key, value in self.fair_maturity_model_data.items():
+            aux = result[self.pattern.findall(key)[0]]
+
+            if aux is None:
+                raise Exception(f"Sorry, key is not expected: {key}")
+
+            final_data[aux][key] = value
+
+        return final_data
 
 
 if __name__ == '__main__':
     d = Data()
-
+    print(d.FMMClassification_data)

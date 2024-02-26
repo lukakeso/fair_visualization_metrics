@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from analysis.graphics import Graphics
+from analysis.data import Data
 
 
 def example_data():
@@ -30,11 +31,18 @@ def example_data():
 
 
 if __name__ == '__main__':
-    data = example_data()
+    # data = example_data()
+    data = Data()
+
     gph = Graphics(data=data)
 
-    gph.create_first_figure()
+    gph.create_first_figure(category='Findable')
+    gph.create_first_figure(category='Accessible')
+    gph.create_first_figure(category='Interoperable')
+    gph.create_first_figure(category='Reusable')
+
     gph.create_second_figure()
+
     gph.pie_chart()
 
     plt.show()

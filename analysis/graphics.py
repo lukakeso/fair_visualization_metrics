@@ -7,45 +7,60 @@ class Graphics:
     def __init__(self, data):
         self.data = data
 
-    def create_first_figure(self):
-        theta = {
-            'Findable': radar_factory(num_vars=len(self.data['Findable']['labels']), frame='polygon'),
-            'Accessible': radar_factory(num_vars=len(self.data['Accessible']['labels']), frame='polygon'),
-            'Interoperable': radar_factory(num_vars=len(self.data['Interoperable']['labels']), frame='polygon'),
-            'Reusable': radar_factory(num_vars=len(self.data['Reusable']['labels']), frame='polygon')
-        }
+    def create_first_figure(self, category: str):
+        theta = radar_factory(num_vars=len(self.data.fairness_classification_per_indicator[category]),
+                              frame='polygon')
+
+        labels = list(self.data.fairness_classification_per_indicator[category].keys())
+        case_data = list(self.data.fairness_classification_per_indicator[category].values())
 
         # Create the first radar chart in Figure 1
-        fig, axs = plt.subplots(figsize=(9, 9), nrows=2, ncols=2, subplot_kw=dict(projection='radar'))
-
+        fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(projection='radar'))
         fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.85, bottom=0.05)
 
-        zipped = [[array_element, key, value] for array_element, (key, value) in zip(axs.flat, self.data.items())]
-        i = 0
-        # axs = axs.flat
+        # zipped = [[array_element, key, value] for array_element, (key, value) in zip(axs.flat, temp.items())]
+        #zipped = [[element, key, value] for element, (key, value) in zip(axs.flat, self.data.fairness_classification_per_indicator.items())]
+
+        #for ax, key, value in zipped:
+            # print(key)
+
         # Plot the four cases from the example data on separate axes
-        for ax, key, value in zipped:
-            ax.set_rgrids([1, 2, 3, 4, 5])
-            ax.set_title(label=key,
-                         weight='bold',
-                         size='large',
-                         position=(0.5, 1.1),
-                         horizontalalignment='center',
-                         verticalalignment='center',
-                         pad=20,
-                         fontsize=16)
+        # for ax, key, value in zipped:
+        ax.set_rgrids([1, 2, 3, 4, 5])
+        ax.set_title(label=category,
+                     weight='bold',
+                     size='large',
+                     position=(0.5, 1.1),
+                     horizontalalignment='center',
+                     verticalalignment='center',
+                     pad=20,
+                     fontsize=16)
 
-            ax.plot(theta[key], value['data'], color='#48BADD')
-            ax.fill(theta[key], value['data'], facecolor='#48BADD', alpha=0.25, label='_nolegend_')
-            ax.set_varlabels(value['labels'])
-            ax.tick_params(axis='x', pad=15)
+        # sub_values = [value[x] for x in value]
+        # sub_keys = [x for x in value]
+        #
+        # ax.plot(theta, sub_values, color='#48BADD')
+        # ax.fill(theta, sub_values, facecolor='#48BADD', alpha=0.25, label='_nolegend_')
+        #for data in case_data:
+        line = ax.plot(theta, case_data, color='#48BADD')
+        ax.fill(theta, case_data, alpha=0.25, label='_nolegend_')
 
-        fig.text(0.5, 0.965, 'FAIRNESS Progress per Indicator',
-                 horizontalalignment='center', color='black', weight='bold',
-                 fontsize=18)
+            #locs, labels = plt.xticks()  # Get the current locations and labels.
+            #plt.xticks(ticks=theta[key], labels=sub_values)
+            #locs, labels = plt.xticks()  # Get the current locations and labels.
+
+        ax.set_varlabels(labels)
+        #ax.tick_params(axis='x', pad=15)
+
+        #plt.show()
+
+        #fig.text(0.5, 0.965, 'FAIRNESS Progress per Indicator',
+        #         horizontalalignment='center', color='black', weight='bold',
+        #         fontsize=18)
 
         # Adjust the spacing between subplots
-        plt.subplots_adjust(wspace=0.5, hspace=0.5)
+        #plt.subplots_adjust(wspace=0.5, hspace=0.5)
+        #plt.show()
 
     def create_second_figure(self):
         # Create the color map from white to blue
@@ -115,8 +130,8 @@ class Graphics:
             return f"{absolute:d}\n({pct:.1f}%)"
 
         # Data for the pie chart
-        labels = ['Essential', 'Important', 'Useful']
-        sizes = [7, 20, 14]
+        labels = list(self.data.FMMClassification_data_length.keys())
+        sizes = [self.data.FMMClassification_data_length[x] for x in labels]
 
         # Create the figure and axes
         fig, ax = plt.subplots()
@@ -135,13 +150,6 @@ class Graphics:
         ax.legend(wedges, labels,
                   loc="center left",
                   bbox_to_anchor=(1, 0, 0.5, 1))
-
-        # Add number and percentage labels
-        for text, autotext in zip(texts, autotexts):
-            percentage = autotext.get_text()
-            value = text.get_text()
-            # ax.text3D(0, 0, 1, f'{value}\n{percentage}', ha='center', va='center')
-            # ax.text3D(0, 0, 1, f'{label}\n{size}\n{percentage}', ha='center', va='center')
 
         # Hide the x-axis and y-axis
         ax.axis('off')
