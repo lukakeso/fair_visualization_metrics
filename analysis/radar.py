@@ -109,9 +109,9 @@ def radar_factory(num_vars, frame='circle'):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
-    data = [['Sulfate', 'Nitrate', 'EC', 'OC1', 'OC2', 'OC3', 'OP', 'CO'],
-            ('Basecase', [
-                [0.01, 0.01, 0.02, 0.71, 0.74, 0.70, 0.00, 0.00]])]
+    data = [['One', 'Two', 'three', 'four', 'five', 'six', 'seven'],
+            ('Data', [
+                [1.01, 2.02, 0.3, 3.51, 2.14, 0.83, 2.67]])]
 
     N = len(data[0])
     theta = radar_factory(N, frame='polygon')
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(projection='radar'))
     fig.subplots_adjust(top=0.85, bottom=0.05)
 
-    ax.set_rgrids([0.2, 0.4, 0.6, 0.8])
+    ax.set_rgrids([0, 1, 2, 3, 4])
     ax.set_title(title, position=(0.5, 1.1), ha='center')
 
     for d in case_data:

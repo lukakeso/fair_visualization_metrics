@@ -11,6 +11,7 @@ class Graphics:
         theta = radar_factory(num_vars=len(self.data.fairness_classification_per_indicator[category]),
                               frame='polygon')
 
+        # Get the lists with the data
         labels = list(self.data.fairness_classification_per_indicator[category].keys())
         case_data = list(self.data.fairness_classification_per_indicator[category].values())
 
@@ -18,14 +19,6 @@ class Graphics:
         fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(projection='radar'))
         fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.85, bottom=0.05)
 
-        # zipped = [[array_element, key, value] for array_element, (key, value) in zip(axs.flat, temp.items())]
-        #zipped = [[element, key, value] for element, (key, value) in zip(axs.flat, self.data.fairness_classification_per_indicator.items())]
-
-        #for ax, key, value in zipped:
-            # print(key)
-
-        # Plot the four cases from the example data on separate axes
-        # for ax, key, value in zipped:
         ax.set_rgrids([1, 2, 3, 4, 5])
         ax.set_title(label=category,
                      weight='bold',
@@ -36,31 +29,10 @@ class Graphics:
                      pad=20,
                      fontsize=16)
 
-        # sub_values = [value[x] for x in value]
-        # sub_keys = [x for x in value]
-        #
-        # ax.plot(theta, sub_values, color='#48BADD')
-        # ax.fill(theta, sub_values, facecolor='#48BADD', alpha=0.25, label='_nolegend_')
-        #for data in case_data:
-        line = ax.plot(theta, case_data, color='#48BADD')
+        ax.plot(theta, case_data, color='#48BADD')
         ax.fill(theta, case_data, alpha=0.25, label='_nolegend_')
 
-            #locs, labels = plt.xticks()  # Get the current locations and labels.
-            #plt.xticks(ticks=theta[key], labels=sub_values)
-            #locs, labels = plt.xticks()  # Get the current locations and labels.
-
         ax.set_varlabels(labels)
-        #ax.tick_params(axis='x', pad=15)
-
-        #plt.show()
-
-        #fig.text(0.5, 0.965, 'FAIRNESS Progress per Indicator',
-        #         horizontalalignment='center', color='black', weight='bold',
-        #         fontsize=18)
-
-        # Adjust the spacing between subplots
-        #plt.subplots_adjust(wspace=0.5, hspace=0.5)
-        #plt.show()
 
     def create_second_figure(self):
         # Create the color map from white to blue
@@ -113,7 +85,13 @@ class Graphics:
         result_column_width = column_width / 2
         initial_position = column_width + column_distance
         position = [0] + [initial_position * i for i in range(1, num_divisions)]
-        y = [0.5, 1.5, 3.5, 5.48]
+
+        y = list()
+        temp_y = self.data.FMMClassification_data_compliance_level
+        for i in ['Findable', 'Accessible', 'Interoperable', 'Reusable']:
+            y.append(temp_y[i])
+
+        # y = [0.5, 1.5, 3.5, 0.48]
         for i in range(4):
             ax.bar(position[i], y[i], bottom=0, color="green", edgecolor='none', width=result_column_width)
 

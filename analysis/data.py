@@ -11,16 +11,27 @@ class Data(object):
         with open(file=filename, mode='r') as f:
             self.raw_data = load(f)
 
-        self.pattern = re.compile(r"RDA-([FAIR]).+-.*", flags=0)
+        self.__pattern__ = re.compile(pattern=r"RDA-([FAIR]).+-.*", flags=0)
 
         self.fair_maturity_model_data = dict()
+        self.fairness_classification_per_indicator = dict()
         self.FMMClassification_data = dict()
         self.FMMClassification_data_length = int()
-        self.fairness_classification_per_indicator = dict()
+        self.FMMClassification_data_maximum = dict()
+        self.FMMClassification_data_minimum = dict()
+        self.FMMClassification_data_sum = dict()
+        self.FMMClassification_data_normalized = dict()
+        self.FMMClassification_data_len = dict()
+        self.FMMClassification_data_threshold = dict()
+        self.FMMClassification_data_compliance_level = dict()
 
         self.get_fair_maturity_model()
         self.get_fdm_classification()
         self.get_fairness_classification_per_indicator()
+        self.classification_data_maximum_minimum()
+        self.classification_data_normalized()
+        self.classification_data_threshold()
+        self.classification_data_compliance_level()
 
     def get_fair_maturity_model(self) -> None:
         fair_maturity_model = {
@@ -115,7 +126,7 @@ class Data(object):
         aux2 = {key: self.fair_maturity_model_data[key] for key in classes[category]}
 
         for key, value in aux2.items():
-            category = self.pattern.findall(key)
+            category = self.__pattern__.findall(key)
 
             if category is None:
                 raise Exception(f"Sorry, key is not expected: {key}")
@@ -141,11 +152,10 @@ class Data(object):
             'Accessible': dict(),
             'Interoperable': dict(),
             'Reusable': dict()
-
         }
 
         for key, value in self.fair_maturity_model_data.items():
-            aux = result[self.pattern.findall(key)[0]]
+            aux = result[self.__pattern__.findall(key)[0]]
 
             if aux is None:
                 raise Exception(f"Sorry, key is not expected: {key}")
@@ -153,6 +163,109 @@ class Data(object):
             final_data[aux][key] = value
 
         return final_data
+
+    def classification_data_maximum_minimum(self):
+        for x in list(self.FMMClassification_data.keys()):
+            self.FMMClassification_data_minimum[x] = dict()
+            self.FMMClassification_data_maximum[x] = dict()
+            self.FMMClassification_data_sum[x] = dict()
+            self.FMMClassification_data_len[x] = dict()
+
+            aux = self.FMMClassification_data[x]
+
+            self.FMMClassification_data_minimum[x] = \
+                {y: min(aux[y].values()) if len(aux[y].values()) != 0 else None for y in aux.keys()}
+
+            self.FMMClassification_data_maximum[x] = \
+                {y: max(aux[y].values()) if len(aux[y].values()) != 0 else None for y in aux.keys()}
+
+            self.FMMClassification_data_sum[x] = \
+                {y: sum(aux[y].values()) if len(aux[y].values()) != 0 else None for y in aux.keys()}
+
+            self.FMMClassification_data_len[x] = \
+                {y: len(aux[y]) if len(aux[y].values()) != 0 else None for y in aux.keys()}
+
+    def classification_data_normalized(self):
+        """
+        Normalize the data of a list in the range [a, b], where 'a' is 0 and 'b' is 1 | 2
+        :return:
+        """
+        a = 0.0
+        b_values = {
+            'Essential': 1.0,
+            'Important': 2.0,
+            'Useful': 2.0
+        }
+        min_ajk = 1.0
+        max_ajk = 5.0
+
+        for i in list(self.FMMClassification_data.keys()):
+            self.FMMClassification_data_normalized[i] = dict()
+
+            b = b_values[i]
+            n = self.FMMClassification_data_len[i]
+            ajk = self.FMMClassification_data_sum[i]
+
+            for j in list(n.keys()):
+                if n[j] is not None:
+                    aux = ajk[j] - n[j] * min_ajk
+                    aux = aux / (n[j] * (max_ajk - min_ajk))
+                    aux = a + aux * (b - a)
+                    self.FMMClassification_data_normalized[i][j] = aux
+                else:
+                    self.FMMClassification_data_normalized[i][j] = None
+
+    def classification_data_threshold(self):
+        threshold = {
+            'Essential': 1.0,
+            'Important': 2.0,
+            'Useful': 2.0
+        }
+
+        for i in list(self.FMMClassification_data_normalized.keys()):
+            self.FMMClassification_data_threshold[i] = dict()
+
+            for j in list(self.FMMClassification_data_normalized[i].keys()):
+                self.FMMClassification_data_threshold[i][j] = (
+                    threshold[i] if self.FMMClassification_data_normalized[i][j] == threshold[i] else 0)
+
+    def classification_data_compliance_level(self):
+        threshold = {
+            'Essential': 1.0,
+            'Important': 2.0,
+            'Useful': 2.0
+        }
+
+        keys = list(list(self.fairness_classification_per_indicator.keys()))
+
+        n = self.FMMClassification_data_normalized
+        h = self.FMMClassification_data_threshold
+
+        aux = {k: n['Essential'][k] for k in keys}
+
+        for i in keys:
+            # In case that the FAIR principle has no indicators we fix the value of the normalized to the
+            # maximum value --> ['Essential': 1, 'Important': 2, 'Useful': 2]
+            if n['Important'][i] is None:
+                n_value_important = threshold['Important']
+            else:
+                n_value_important = n['Important'][i]
+
+            if n['Useful'][i] is None:
+                n_value_useful = threshold['Useful']
+            else:
+                n_value_useful = n['Useful'][i]
+
+            if aux[i] is None:
+                n_value_essential = threshold['Essential']
+            else:
+                n_value_essential = aux[i]
+
+            aux[i] = (n_value_essential +
+                      h['Essential'][i] * n_value_important +
+                      h['Essential'][i] * h['Important'][i] * n_value_useful)
+
+        self.FMMClassification_data_compliance_level = aux
 
 
 if __name__ == '__main__':
