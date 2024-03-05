@@ -6,7 +6,7 @@ import re
 class Data(object):
     def __init__(self):
         root_path = dirname(dirname(__file__))
-        filename = join(root_path, 'data', 'example.json')
+        filename = join(root_path, 'data', 'sww.json')
 
         with open(file=filename, mode='r') as f:
             self.raw_data = load(f)

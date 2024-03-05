@@ -17,9 +17,7 @@ class Graphics:
 
         # Create the first radar chart in Figure 1
         fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(projection='radar'))
-        fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.85, bottom=0.05)
 
-        ax.set_rgrids([1, 2, 3, 4, 5])
         ax.set_title(label=category,
                      weight='bold',
                      size='large',
@@ -32,6 +30,7 @@ class Graphics:
         ax.plot(theta, case_data, color='#48BADD')
         ax.fill(theta, case_data, alpha=0.25, label='_nolegend_')
 
+        ax.xaxis.set_tick_params(pad=25, rotation=10)
         ax.set_varlabels(labels)
 
     def create_second_figure(self):
