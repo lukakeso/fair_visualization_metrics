@@ -133,7 +133,7 @@ class Graphics:
                   loc="center left",
                   bbox_to_anchor=(1, 0, 0.5, 1),
                   fontsize=20,
-                  shadow = True)
+                  shadow=True)
 
         # Hide the x-axis and y-axis
         ax.axis('off')
