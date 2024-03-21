@@ -6,7 +6,7 @@ import re
 class Data(object):
     def __init__(self):
         root_path = dirname(dirname(__file__))
-        filename = join(root_path, 'data', 'sww.json')
+        filename = join(root_path, 'data', 'pwn.json')
 
         with open(file=filename, mode='r') as f:
             self.raw_data = load(f)
@@ -227,7 +227,7 @@ class Data(object):
 
             for j in list(self.FMMClassification_data_normalized[i].keys()):
                 self.FMMClassification_data_threshold[i][j] = (
-                    threshold[i] if self.FMMClassification_data_normalized[i][j] == threshold[i] else 0)
+                    1 if self.FMMClassification_data_normalized[i][j] == threshold[i] else 0)
 
     def classification_data_compliance_level(self):
         threshold = {

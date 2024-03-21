@@ -41,7 +41,7 @@ class Graphics:
         num_divisions = 6
 
         # Create the figure and axes
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(13, 8))
 
         # Set the width of each column
         column_width = 0.6
@@ -88,11 +88,14 @@ class Graphics:
         y = list()
         temp_y = self.data.FMMClassification_data_compliance_level
         for i in ['Findable', 'Accessible', 'Interoperable', 'Reusable']:
-            y.append(temp_y[i])
+            # The bar char start with min=0.5 and max=5.5, so we need to add 0.5 to the values
+            y.append(temp_y[i]+0.5)
 
         # y = [0.5, 1.5, 3.5, 0.48]
         for i in range(4):
             ax.bar(position[i], y[i], bottom=0, color="green", edgecolor='none', width=result_column_width)
+            label = list({j for j in temp_y if temp_y[j] + 0.5 == y[i]})[0]
+            ax.text(x=position[i], y=-0.5, s=label, horizontalalignment='center', fontsize=18, color=cmap(color_value), weight='semibold')
 
         # Hide the x-axis and y-axis
         ax.axis('off')
@@ -100,6 +103,8 @@ class Graphics:
         # Set the limits for the x-axis and y-axis
         ax.set_xlim([-1.25, (column_width + column_distance) * 4 - column_distance + column_width])
         ax.set_ylim([-0.5, num_divisions + 1])
+
+        ax.set_title(label='FDM FAIRness Level score', fontsize=24, color=cmap(color_value), weight='semibold')
 
     def pie_chart(self):
         def func(pct, allvals):
@@ -111,22 +116,24 @@ class Graphics:
         sizes = [self.data.FMMClassification_data_length[x] for x in labels]
 
         # Create the figure and axes
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(15, 10))
 
         # Generate the pie chart
         wedges, texts, autotexts = ax.pie(sizes,
                                           autopct=lambda pct: func(pct, sizes),
                                           shadow=True,
                                           startangle=90,
-                                          textprops=dict(weight="bold", color="black", size="large"))
+                                          textprops=dict(weight="bold", color="black", size=20))
 
         # Add a title
-        ax.set_title('Distribution of priorities')
+        ax.set_title(label='Distribution of priorities', fontsize=24, color='blue', weight='semibold')
 
         # legend
         ax.legend(wedges, labels,
                   loc="center left",
-                  bbox_to_anchor=(1, 0, 0.5, 1))
+                  bbox_to_anchor=(1, 0, 0.5, 1),
+                  fontsize=20,
+                  shadow = True)
 
         # Hide the x-axis and y-axis
         ax.axis('off')
