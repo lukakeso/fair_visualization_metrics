@@ -49,6 +49,9 @@ class Graphics:
         # Set the distance between the columns
         column_distance = 0.8
 
+        # Color Value based on the number of divisions
+        color_value = 0.0
+
         # Iterate over each column
         for i in range(4):
             # Calculate the x-coordinate of the column
@@ -66,7 +69,7 @@ class Graphics:
                 ax.bar(x, 1, bottom=j, color=color, edgecolor='none', width=column_width)
 
         # Add white lines at the top of each division within the column
-        y = (num_divisions - 1) + 0.5 - 0.02  # the lines have linewidht=3, so to center the line we need to rest 0.01
+        y = (num_divisions - 1) + 0.5 - 0.02  # the lines have linewidth=3, so to center the line we need to rest 0.01
         # TODO: need to calculate -0.1 in function of the dimensions of the case, 0.1 is = -0.1 + 0.2
         #  (extension of the line)
         x1, y1 = [-0.07, 0.07], [y, y]
@@ -95,7 +98,8 @@ class Graphics:
         for i in range(4):
             ax.bar(position[i], y[i], bottom=0, color="green", edgecolor='none', width=result_column_width)
             label = list({j for j in temp_y if temp_y[j] + 0.5 == y[i]})[0]
-            ax.text(x=position[i], y=-0.5, s=label, horizontalalignment='center', fontsize=18, color=cmap(color_value), weight='semibold')
+            ax.text(x=position[i], y=-0.5, s=label, horizontalalignment='center', fontsize=18,
+                    color=cmap(color_value), weight='semibold')
 
         # Hide the x-axis and y-axis
         ax.axis('off')
