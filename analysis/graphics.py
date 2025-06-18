@@ -1,42 +1,69 @@
 import matplotlib.pyplot as plt
 from analysis.radar import radar_factory
 import numpy as np
-
+from typing import Optional
+from .data import Data
 
 class Graphics:
-    def __init__(self, data):
+    def __init__(self, data: Data, 
+                       data2: Optional[Data] = None,
+                       data_name: Optional[str] = None,
+                       data_name2: Optional[str] = None,
+                       ):
+        
         self.data = data
+        
+        # get data to compare
+        self.data2 = data2
+        self.overlay_plots = data2 is not None
+        self.data_name = self.data.response_id if data_name is None else data_name
+        self.data2_name = self.data2.response_id if data_name2 is None else data_name2
+        
+        # Create the color map from white to blue
+        self.cmap = plt.cm.get_cmap('Blues')
 
     def create_first_figure(self, category: str):
         theta = radar_factory(num_vars=len(self.data.fairness_classification_per_indicator[category]),
                               frame='polygon')
-
+        
         # Get the lists with the data
         labels = list(self.data.fairness_classification_per_indicator[category].keys())
         case_data = list(self.data.fairness_classification_per_indicator[category].values())
 
         # Create the first radar chart in Figure 1
-        fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(projection='radar'))
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='radar'))
 
-        ax.set_title(label=category,
-                     weight='bold',
+        ax.set_title(label=f"{category}"+(f" {self.data_name} vs {self.data2_name}" if self.overlay_plots else ""),
                      size='large',
-                     position=(0.5, 1.1),
+                     position=(0.5, 0.9),
                      horizontalalignment='center',
-                     verticalalignment='center',
+                     verticalalignment='top',
                      pad=20,
-                     fontsize=16)
+                     fontsize=16,
+                     color=self.cmap(1.0), 
+                     weight='semibold')
 
-        ax.plot(theta, case_data, color='#48BADD')
+        ax.plot(theta, case_data, color='#48BADD', label=self.data_name if self.overlay_plots else None)
         ax.fill(theta, case_data, alpha=0.25, label='_nolegend_')
-
+        
+        if self.overlay_plots:
+            case_data_2 = list(self.data2.fairness_classification_per_indicator[category].values())
+            ax.plot(theta, case_data_2, color='#FF5733', label=self.data2_name if self.overlay_plots else None)
+            ax.fill(theta, case_data_2, alpha=0.25)
+        
         ax.xaxis.set_tick_params(pad=25, rotation=10)
         ax.set_varlabels(labels)
 
-    def create_second_figure(self):
-        # Create the color map from white to blue
-        cmap = plt.cm.get_cmap('Blues')
+        # Add legend
+        if self.overlay_plots:
+            ax.legend(
+                loc="center right",
+                bbox_to_anchor=(1, 0, 0.5, 1),
+                fontsize=20)
+            #ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
 
+
+    def create_second_figure(self):
         # Set the number of divisions in each column
         num_divisions = 6
 
@@ -63,7 +90,7 @@ class Graphics:
                 color_value = j / (num_divisions - 1)
 
                 # Get the color for the division using the color map
-                color = cmap(color_value)
+                color = self.cmap(color_value)
 
                 # Plot the bar for the division
                 ax.bar(x, 1, bottom=j, color=color, edgecolor='none', width=column_width)
@@ -79,12 +106,13 @@ class Graphics:
             x1, y1 = [x1[i] + inc_x[i] for i in range(len(x1))], [y, y]
 
         # Add the division's lines for each column
-        for i in range(8):
+        for i in range(7):
             ax.axhline(i, color='grey', lw=1)
 
         # Add the bar for each of the column based on the data received
         # TODO: Provide the data and escale between 0, 5.5
         result_column_width = column_width / 2
+        bar_spacing = result_column_width / 2 
         initial_position = column_width + column_distance
         position = [0] + [initial_position * i for i in range(1, num_divisions)]
 
@@ -93,13 +121,30 @@ class Graphics:
         for i in ['Findable', 'Accessible', 'Interoperable', 'Reusable']:
             # The bar char start with min=0.5 and max=5.5, so we need to add 0.5 to the values
             y.append(temp_y[i]+0.5)
+        
+        if self.overlay_plots:
+            y2 = list()
+            temp_y2 = self.data2.FMMClassification_data_compliance_level
+            for i in ['Findable', 'Accessible', 'Interoperable', 'Reusable']:
+            # The bar char start with min=0.5 and max=5.5, so we need to add 0.5 to the values
+                y2.append(temp_y2[i]+0.5)
 
         # y = [0.5, 1.5, 3.5, 0.48]
         for i in range(4):
-            ax.bar(position[i], y[i], bottom=0, color="green", edgecolor='none', width=result_column_width)
-            label = list({j for j in temp_y if temp_y[j] + 0.5 == y[i]})[0]
-            ax.text(x=position[i], y=-0.5, s=label, horizontalalignment='center', fontsize=18,
-                    color=cmap(color_value), weight='semibold')
+            if self.overlay_plots:
+                if i == 0:
+                    ax.bar(position[i]-bar_spacing, y2[i], bottom=0, alpha=0.6, color="orange", edgecolor='none', width=result_column_width, label=self.data_name)
+                    ax.bar(position[i]+bar_spacing, y[i], bottom=0, alpha=0.6, color="green", edgecolor='none', width=result_column_width, label=self.data2_name)
+                else:
+                    ax.bar(position[i]-bar_spacing, y2[i], bottom=0, alpha=0.6, color="orange", edgecolor='none', width=result_column_width)
+                    ax.bar(position[i]+bar_spacing, y[i], bottom=0, alpha=0.6, color="green", edgecolor='none', width=result_column_width)
+            else:
+                ax.bar(position[i], y[i], bottom=0, alpha=0.6, color="green", edgecolor='none', width=result_column_width)
+            col_name = list({j for j in temp_y if temp_y[j] + 0.5 == y[i]})[0]
+            ax.text(x=position[i], y=-0.5, s=col_name, horizontalalignment='center', fontsize=18,
+                    color=self.cmap(color_value), weight='semibold')
+            
+            
 
         # Hide the x-axis and y-axis
         ax.axis('off')
@@ -108,16 +153,23 @@ class Graphics:
         ax.set_xlim([-1.25, (column_width + column_distance) * 4 - column_distance + column_width])
         ax.set_ylim([-0.5, num_divisions + 1])
 
-        ax.set_title(label='FDM FAIRness Level score', fontsize=24, color=cmap(color_value), weight='semibold')
+        ax.set_title(label='FDM FAIRness Level score'+(f"\n{self.data_name} vs {self.data2_name}" if self.overlay_plots else ""), fontsize=24, color=self.cmap(1.0), weight='semibold')
+        
+        if self.overlay_plots:
+            ax.legend(loc="center right",
+                    bbox_to_anchor=(0.62, 0.15, 0.5, 0.5),
+                    fontsize=20)
 
-    def pie_chart(self):
+        
+        
+    def pie_chart(self, data, data_name=""):
         def func(pct, allvals):
             absolute = int(np.round(pct / 100. * np.sum(allvals)))
             return f"{absolute:d}\n({pct:.1f}%)"
 
         # Data for the pie chart
-        labels = list(self.data.FMMClassification_data_length.keys())
-        sizes = [self.data.FMMClassification_data_length[x] for x in labels]
+        labels = list(data.FMMClassification_data_length.keys())
+        sizes = [data.FMMClassification_data_length[x] for x in labels]
 
         # Create the figure and axes
         fig, ax = plt.subplots(figsize=(15, 10))
@@ -125,19 +177,17 @@ class Graphics:
         # Generate the pie chart
         wedges, texts, autotexts = ax.pie(sizes,
                                           autopct=lambda pct: func(pct, sizes),
-                                          shadow=True,
                                           startangle=90,
                                           textprops=dict(weight="bold", color="black", size=20))
 
         # Add a title
-        ax.set_title(label='Distribution of priorities', fontsize=24, color='blue', weight='semibold')
+        ax.set_title(label=f'Distribution of priorities'+(f"\n for {data_name}" if self.overlay_plots else ""), fontsize=24, color=self.cmap(1.0), weight='semibold')
 
         # legend
         ax.legend(wedges, labels,
                   loc="center left",
                   bbox_to_anchor=(1, 0, 0.5, 1),
-                  fontsize=20,
-                  shadow=True)
+                  fontsize=20,)
 
         # Hide the x-axis and y-axis
-        ax.axis('off')
+        ax.axis('off')        
