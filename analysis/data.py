@@ -4,13 +4,14 @@ import re
 
 
 class Data(object):
-    def __init__(self):
+    def __init__(self, json_file='example.json'):
         root_path = dirname(dirname(__file__))
-        filename = join(root_path, 'data', 'pwn.json')
+        filename = join(root_path, 'data', json_file)
 
         with open(file=filename, mode='r') as f:
             self.raw_data = load(f)
 
+        self.response_id = self.raw_data['responses'][0]["id"]
         self.__pattern__ = re.compile(pattern=r"RDA-([FAIR]).+-.*", flags=0)
 
         self.fair_maturity_model_data = dict()
