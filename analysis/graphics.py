@@ -36,10 +36,23 @@ class Graphics:
         
         # data for comparison
         self.data2 = data2
+        
+        # defining a flag to be used in functions later
         self.overlay_plots = data2 is not None
+        
+        # defining names for consistency between  different graphs
+        # e.g. one name for one data source
         self.data_name = self.data.response_id if data_name is None else data_name
         self.data2_name = self.data2.response_id if data_name2 is None else data_name2
         
+        # defining colors for consistency between graphs 
+        # e.g. one color for one data source
+        if self.overlay_plots:
+            self.color1 = "brown"
+            self.color2 = "orange"
+        else:
+            self.color1 = "black"
+
         # Create the color map from white to blue
         self.cmap = plt.cm.get_cmap('Blues')
 
@@ -52,25 +65,25 @@ class Graphics:
         case_data = list(self.data.fairness_classification_per_indicator[category].values())
 
         # Create the first radar chart in Figure 1
-        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='radar'))
+        fig, ax = plt.subplots(figsize=(10, 12), subplot_kw=dict(projection='radar'))
 
         ax.set_title(label=f"{category}"+(f" {self.data_name} vs {self.data2_name}" if self.overlay_plots else ""),
                      size='large',
-                     position=(0.5, 0.9),
                      horizontalalignment='center',
                      verticalalignment='top',
-                     pad=20,
+                     pad=80,
                      fontsize=16,
                      color=self.cmap(1.0), 
                      weight='semibold')
 
-        ax.plot(theta, case_data, color='#48BADD', label=self.data_name if self.overlay_plots else None)
-        ax.fill(theta, case_data, alpha=0.25, label='_nolegend_')
+        ax.plot(theta, case_data, color=self.color1, label=self.data_name if self.overlay_plots else None)
+        ax.fill(theta, case_data, color=self.color1, alpha=0.25)
+        
         
         if self.overlay_plots:
             case_data_2 = list(self.data2.fairness_classification_per_indicator[category].values())
-            ax.plot(theta, case_data_2, color='#FF5733', label=self.data2_name if self.overlay_plots else None)
-            ax.fill(theta, case_data_2, alpha=0.25)
+            ax.plot(theta, case_data_2, color=self.color2, label=self.data2_name if self.overlay_plots else None)
+            ax.fill(theta, case_data_2, color=self.color2, alpha=0.25)
         
         ax.xaxis.set_tick_params(pad=25, rotation=10)
         ax.set_varlabels(labels)
@@ -79,8 +92,8 @@ class Graphics:
         if self.overlay_plots:
             ax.legend(
                 loc="center right",
-                bbox_to_anchor=(1, 0, 0.5, 1),
-                fontsize=20)
+                bbox_to_anchor=(1, 0, 0.5, 1.3),
+                fontsize=12)
             #ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
 
 
@@ -154,13 +167,13 @@ class Graphics:
         for i in range(4):
             if self.overlay_plots:
                 if i == 0:
-                    ax.bar(position[i]-bar_spacing, y2[i], bottom=0, alpha=0.6, color="orange", edgecolor='none', width=result_column_width, label=self.data_name)
-                    ax.bar(position[i]+bar_spacing, y[i], bottom=0, alpha=0.6, color="green", edgecolor='none', width=result_column_width, label=self.data2_name)
+                    ax.bar(position[i]-bar_spacing, y2[i], bottom=0, alpha=0.6, color=self.color1, edgecolor='none', width=result_column_width, label=self.data_name)
+                    ax.bar(position[i]+bar_spacing, y[i], bottom=0, alpha=0.6, color=self.color2, edgecolor='none', width=result_column_width, label=self.data2_name)
                 else:
-                    ax.bar(position[i]-bar_spacing, y2[i], bottom=0, alpha=0.6, color="orange", edgecolor='none', width=result_column_width)
-                    ax.bar(position[i]+bar_spacing, y[i], bottom=0, alpha=0.6, color="green", edgecolor='none', width=result_column_width)
+                    ax.bar(position[i]-bar_spacing, y2[i], bottom=0, alpha=0.6, color=self.color1, edgecolor='none', width=result_column_width)
+                    ax.bar(position[i]+bar_spacing, y[i], bottom=0, alpha=0.6, color=self.color2, edgecolor='none', width=result_column_width)
             else:
-                ax.bar(position[i], y[i], bottom=0, alpha=0.6, color="green", edgecolor='none', width=result_column_width)
+                ax.bar(position[i], y[i], bottom=0, alpha=0.6, color=self.color1, edgecolor='none', width=result_column_width)
             col_name = list({j for j in temp_y if temp_y[j] + 0.5 == y[i]})[0]
             ax.text(x=position[i], y=-0.5, s=col_name, horizontalalignment='center', fontsize=18,
                     color=self.cmap(color_value), weight='semibold')
@@ -183,7 +196,7 @@ class Graphics:
 
         
         
-    def pie_chart(self, data, data_name=""):
+    def pie_chart(self, data, data_name="", text_color="black"):
         def func(pct, allvals):
             absolute = int(np.round(pct / 100. * np.sum(allvals)))
             return f"{absolute:d}\n({pct:.1f}%)"
@@ -195,11 +208,15 @@ class Graphics:
         # Create the figure and axes
         fig, ax = plt.subplots(figsize=(15, 10))
 
+        # Define colors for the wedges
+        colors = [self.cmap(i / max(len(labels), 1)) for i in range(len(labels)+1)][-3:][::-1]
+        
         # Generate the pie chart
         wedges, texts, autotexts = ax.pie(sizes,
+                                          colors=colors,
                                           autopct=lambda pct: func(pct, sizes),
                                           startangle=90,
-                                          textprops=dict(weight="bold", color="black", size=20))
+                                          textprops=dict(weight="bold", color=text_color, size=20))
 
         # Add a title
         ax.set_title(label=f'Distribution of priorities'+(f"\n for {data_name}" if self.overlay_plots else ""), fontsize=24, color=self.cmap(1.0), weight='semibold')
