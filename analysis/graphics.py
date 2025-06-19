@@ -10,10 +10,31 @@ class Graphics:
                        data_name: Optional[str] = None,
                        data_name2: Optional[str] = None,
                        ):
+        """
+        Initializes the Graphics class for visualizing one or two datasets, 
+        with optional naming for comparison purposes.
+
+        Parameters:
+        - data (Data): The primary dataset to be visualized.
+        - data2 (Optional[Data]): A second dataset for comparison, if provided.
+        - data_name (Optional[str]): A custom name for the primary dataset (used in legends/titles). 
+                                    Defaults to the dataset's response_id.
+        - data_name2 (Optional[str]): A custom name for the second dataset, if provided. 
+                                    Defaults to the second dataset's response_id.
         
+        Attributes:
+        - self.data: Stores the primary dataset.
+        - self.data2: Stores the second dataset for comparison (if provided).
+        - self.overlay_plots: Boolean flag indicating if comparison plots should be generated.
+        - self.data_name: Label name for the primary dataset.
+        - self.data2_name: Label name for the second dataset.
+        - self.cmap: A colormap from white to blue (Blues) for visual consistency in plots.
+        """
+        
+        # primary data
         self.data = data
         
-        # get data to compare
+        # data for comparison
         self.data2 = data2
         self.overlay_plots = data2 is not None
         self.data_name = self.data.response_id if data_name is None else data_name
