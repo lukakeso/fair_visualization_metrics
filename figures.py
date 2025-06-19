@@ -33,8 +33,11 @@ def example_data():
 if __name__ == '__main__':
     #data = example_data()
     data = Data(json_file="example_reduced.json")
-    data2 = Data(json_file="hst.json")  #set to None if using only one data source
+    data2 = Data(json_file="hst.json")  # set to None if using only one data source
     
+    # data names are used only when both data sources are given and 
+    # are used in graph titles, so there is no need to adjust them 
+    # for single data source functionality 
     data_name = "data1"
     data_name2 = "data2"
     

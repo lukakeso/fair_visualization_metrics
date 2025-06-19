@@ -10,8 +10,10 @@ class Data(object):
 
         with open(file=filename, mode='r') as f:
             self.raw_data = load(f)
-
+            
+        # used as default data_name when drawing graphs
         self.response_id = self.raw_data['responses'][0]["id"]
+        
         self.__pattern__ = re.compile(pattern=r"RDA-([FAIR]).+-.*", flags=0)
 
         self.fair_maturity_model_data = dict()
