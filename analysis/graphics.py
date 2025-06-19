@@ -319,3 +319,88 @@ class Graphics:
 
         # Hide the x-axis and y-axis
         ax.axis('off')        
+
+    def cumulative_proportion_bar_chart(self):
+        """
+        Generate a cumulative proportion bar chart comparing one or two datasets.
+
+        This method visualizes the proportion of different categories (defined by `FMMClassification_data_length`)
+        as stacked bar segments, where each segment's height represents its relative proportion of the total.
+        
+        If `overlay_plots` is True, it displays two bars side-by-side (one for each dataset) for comparison.
+        Each segment is labeled with both the count and the percentage it represents.
+
+        Assumes that the instance has the following attributes:
+            - self.data: Object with attribute `FMMClassification_data_length` (dict of category counts).
+            - self.data2: (Optional) Secondary object with the same structure, used for overlay.
+            - self.overlay_plots: Boolean indicating whether to compare two datasets.
+            - self.color1, self.color2: Colors used to distinguish between datasets.
+            - self.data_name, self.data2_name: Names shown on the bars for each dataset.
+            - self.cmap: Colormap used to generate segment colors.
+
+        Produces:
+            - A matplotlib figure with one or two stacked bars.
+            - Each segment of the bar shows its raw count and percentage of the total.
+            - A legend is shown for category labels.
+        """
+        
+        labels = list(self.data.FMMClassification_data_length.keys())
+        sizes1 = np.array([self.data.FMMClassification_data_length[x] for x in labels], dtype=float)
+        total1 = sizes1.sum()
+        props1 = sizes1 / total1  # proportions sum to 1
+
+        if self.overlay_plots:
+            sizes2 = np.array([self.data2.FMMClassification_data_length.get(x, 0) for x in labels], dtype=float)
+            total2 = sizes2.sum()
+            props2 = sizes2 / total2
+        else:
+            sizes2 = None
+            props2 = None
+
+        fig, ax = plt.subplots(figsize=(15, 10))
+
+        bar_width = 0.4
+        x = np.arange(len(labels))
+
+        colors = [self.cmap(i / max(len(labels), 1)) for i in range(len(labels)+1)][-3:][::-1]
+
+        def draw_bar(x_pos, props, sizes, label, color):
+            bottom = 0
+            for i, (prop, count) in enumerate(zip(props, sizes)):
+                if prop == 0:
+                    continue  # skip zero-size segments
+                ax.bar(x_pos, prop, bar_width, bottom=bottom, color=colors[i], edgecolor=color)
+
+                # Add label inside each segment
+                y_center = bottom + prop / 2
+                percent_str = f"{int(count)} ({prop*100:.1f}%)"
+                ax.text(x_pos, y_center, percent_str,
+                        ha='center', va='center', fontsize=14, weight='bold', color='black' if i != 0 else "white")
+                bottom += prop
+
+            # Add label at top
+            ax.text(x_pos, 1.03, label, ha='center', fontsize=18, weight='bold', color=color)
+
+        if self.overlay_plots:
+            draw_bar(x[0] - bar_width, props1, sizes1, self.data_name or "Data 1", self.color1)
+            draw_bar(x[0] + bar_width, props2, sizes2, self.data2_name or "Data 2", self.color2)
+
+            ax.set_xlim(x[0] - 1, x[0] + 1)
+        else:
+            draw_bar(0, props1, sizes1, self.data_name or "", self.color1)
+            ax.set_xlim(-1, 1)
+
+        # Add legend
+        handles = [plt.Rectangle((0, 0), 1, 1, color=colors[i]) for i in range(len(labels))]
+        ax.legend(handles, labels, fontsize=16, title="Categories")
+
+        ax.set_ylim(0, 1.1)
+        ax.set_ylabel("Proportion", fontsize=20, weight='bold')
+        ax.set_xticks([])
+        ax.yaxis.grid(True, linestyle='--', alpha=0.7)
+
+        # Title
+        ax.set_title(f'Distribution of Priorities' + (f"\n for {self.data_name} and {self.data2_name}" if self.overlay_plots else ""),
+                    fontsize=24, color=self.cmap(1.0), weight='semibold')
+
+        plt.tight_layout()

@@ -54,9 +54,11 @@ if __name__ == '__main__':
 
     gph.create_second_figure()
 
-    gph.pie_chart(data, data_name)
+    gph.pie_chart(data, data_name, gph.color1)
     
     if data2 is not None:
-        gph.pie_chart(data2, data_name2)
+        gph.pie_chart(data2, data_name2, gph.color2)
+
+    gph.cumulative_proportion_bar_chart()
 
     plt.show()
