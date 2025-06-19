@@ -25,11 +25,13 @@ This repository offers visualization tools to analyze FAIR levels across differe
 
 ## ⚙️ Setup
 
-Make sure you have **Python 3.11** installed.
+Make sure you have **Python 3.11** or newer installed.
 
 Example of how to install the required dependencies:
 
 ```bash
+python -m venv myenv
+source myenv/bin/activate               # Linux/macOS
 pip install -r requirements.txt
 ```
 
