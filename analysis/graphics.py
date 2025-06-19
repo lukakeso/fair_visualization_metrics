@@ -3,6 +3,8 @@ from analysis.radar import radar_factory
 import numpy as np
 from typing import Optional
 from .data import Data
+import textwrap
+import math
 
 class Graphics:
     def __init__(self, data: Data, 
@@ -60,8 +62,18 @@ class Graphics:
         theta = radar_factory(num_vars=len(self.data.fairness_classification_per_indicator[category]),
                               frame='polygon')
         
-        # Get the lists with the data
-        labels = list(self.data.fairness_classification_per_indicator[category].keys())
+         # Get the lists with the data
+        rda_labels = list(self.data.fairness_classification_per_indicator[category].keys())
+        
+        # maps from RDA codes to human readable labels
+        long_labels = [self.data.rda_mapping[l] for l in rda_labels]
+        
+        # adds linebreaks to the labels for better readability on the graph
+        labels = ['\n'.join(textwrap.wrap(label, width=30, 
+                                    break_long_words=False, 
+                                    break_on_hyphens=False))
+                                    for label in long_labels]
+        
         case_data = list(self.data.fairness_classification_per_indicator[category].values())
 
         # Create the first radar chart in Figure 1
@@ -85,8 +97,86 @@ class Graphics:
             ax.plot(theta, case_data_2, color=self.color2, label=self.data2_name if self.overlay_plots else None)
             ax.fill(theta, case_data_2, color=self.color2, alpha=0.25)
         
-        ax.xaxis.set_tick_params(pad=25, rotation=10)
+        # Defined ticks for radar plot (5 is the max value for all radar plots)
+        ax.set_yticks([1, 2, 3, 4, 5])  
         ax.set_varlabels(labels)
+                
+        def pull_towards_centers(angle_rad, strength=0.1):
+            """
+            ONLY VISUAL EFFECT, NO EFFECT ON DATA
+            Pulls angle toward 90° if in [0, π), or toward 270° if in [π, 2π),
+            with 0, π/2, π, and 3π/2 unchanged.
+
+            Parameters:
+                angle_rad (float): Angle in radians
+                strength (float): How strongly to pull (0 = no pull, 1 = full snap)
+
+            Returns:
+                float: Adjusted angle in radians
+            """
+            angle_rad = angle_rad % (2 * math.pi)
+
+            # Check for anchor angles: do not move them
+            anchors = [0, math.pi/2, math.pi, 3*math.pi/2]
+            for anchor in anchors:
+                if abs(angle_rad - anchor) < 1e-6:
+                    return angle_rad
+
+            # Decide which direction to pull
+            if 0 < angle_rad < math.pi:
+                target = math.pi / 2  # pull toward 90°
+            else:
+                target = 3 * math.pi / 2  # pull toward 270°
+
+            # Weighted average between angle and target
+            return (1 - strength) * angle_rad + strength * target
+                
+        
+        def radar_plot_text_displacement(angle_rad, max_disp=1.5):
+            """
+            ONLY VISUAL EFFECT, NO EFFECT ON DATA
+            Calculate a radial text displacement factor for radar plot labels based on angle.
+
+            This function is used to adjust the radial position of text labels in a radar (spider) plot,
+            helping to prevent overlap by offsetting labels more strongly at horizontal angles (e.g., left/right)
+            and less at vertical angles (e.g., top/bottom). The displacement is computed using the sine
+            of the angle to achieve this effect.
+
+            Parameters:
+                angle_rad (float): The angle (in radians) for the label position on the radar plot.
+                max_disp (float): The maximum displacement scaling factor (default is 1.5).
+
+            Returns:
+                float: A displacement value between 0 and `max_disp` to be added to the radius of the label.
+            """
+            # Normalize angle between 0 and 2π
+            angle_rad = angle_rad % (2*math.pi)
+
+            # Use absolute sine to get displacement between 0 and 1
+            displacement_factor = abs(math.sin(angle_rad))
+
+            # Scale by max displacement
+            displacement = displacement_factor * max_disp
+            
+            return displacement
+
+        # Define angles based on the number of labels
+        angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False)
+
+        # Remove original x tick labels
+        ax.set_xticklabels([])
+
+        # Add custom labels
+        for i, angle in enumerate(angles):
+            adj_angle = pull_towards_centers(angle)  # your function
+            disp = radar_plot_text_displacement(adj_angle)  # your radial offset
+
+            ax.text(
+                adj_angle,      # theta
+                5.6 + disp,     # radius (adjust outward)
+                labels[i],      # label text
+                ha='center', va='center'
+            )
 
         # Add legend
         if self.overlay_plots:
