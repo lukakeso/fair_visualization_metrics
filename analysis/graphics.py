@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as path_effects
 from analysis.radar import radar_factory
 import numpy as np
 from typing import Optional
@@ -50,10 +51,10 @@ class Graphics:
         # defining colors for consistency between graphs 
         # e.g. one color for one data source
         if self.overlay_plots:
-            self.color1 = "brown"
-            self.color2 = "orange"
+            self.color1 = "grey"
+            self.color2 = "blue"
         else:
-            self.color1 = "black"
+            self.color1 = "blue"
 
         # Create the color map from white to blue
         self.cmap = plt.cm.get_cmap('Blues')
@@ -77,20 +78,22 @@ class Graphics:
         case_data = list(self.data.fairness_classification_per_indicator[category].values())
 
         # Create the first radar chart in Figure 1
-        fig, ax = plt.subplots(figsize=(10, 12), subplot_kw=dict(projection='radar'))
+        fig, ax = plt.subplots(figsize=(20, 12), subplot_kw=dict(projection='radar'))
 
         ax.set_title(label=f"{category}"+(f" {self.data_name} vs {self.data2_name}" if self.overlay_plots else ""),
-                     size='large',
                      horizontalalignment='center',
                      verticalalignment='top',
                      pad=80,
-                     fontsize=16,
+                     fontsize=24,
                      color=self.cmap(1.0), 
                      weight='semibold')
+        
+        # colors the axis of the spider/radar plot dark grey
+        ax.xaxis.grid(True, color="dimgray")
+        ax.yaxis.grid(True, color="dimgray")
 
         ax.plot(theta, case_data, color=self.color1, label=self.data_name if self.overlay_plots else None)
         ax.fill(theta, case_data, color=self.color1, alpha=0.25)
-        
         
         if self.overlay_plots:
             case_data_2 = list(self.data2.fairness_classification_per_indicator[category].values())
@@ -184,7 +187,8 @@ class Graphics:
                 loc="center right",
                 bbox_to_anchor=(1, 0, 0.5, 1.3),
                 fontsize=12)
-            #ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
+
+        plt.tight_layout(rect=[0, 0, 1, 0.94])
 
 
     def create_second_figure(self):
@@ -283,10 +287,12 @@ class Graphics:
             ax.legend(loc="center right",
                     bbox_to_anchor=(0.62, 0.15, 0.5, 0.5),
                     fontsize=20)
+            
+        plt.tight_layout(rect=[0, 0, 1, 0.94])
 
         
         
-    def pie_chart(self, data, data_name="", text_color="black"):
+    def pie_chart(self, data, data_name=""):
         def func(pct, allvals):
             absolute = int(np.round(pct / 100. * np.sum(allvals)))
             return f"{absolute:d}\n({pct:.1f}%)"
@@ -306,8 +312,15 @@ class Graphics:
                                           colors=colors,
                                           autopct=lambda pct: func(pct, sizes),
                                           startangle=90,
-                                          textprops=dict(weight="bold", color=text_color, size=20))
+                                          textprops=dict(weight="bold", color="white", size=20))
 
+        # Apply path effects (stroke) to label text
+        for text in texts + autotexts:
+            text.set_path_effects([
+                path_effects.Stroke(linewidth=2, foreground='black'),  # Outline
+                path_effects.Normal()  # Original text
+            ])
+        
         # Add a title
         ax.set_title(label=f'Distribution of priorities'+(f"\n for {data_name}" if self.overlay_plots else ""), fontsize=24, color=self.cmap(1.0), weight='semibold')
 
@@ -318,7 +331,9 @@ class Graphics:
                   fontsize=20,)
 
         # Hide the x-axis and y-axis
-        ax.axis('off')        
+        ax.axis('off')
+        
+        plt.tight_layout(rect=[0, 0, 1, 0.94])
 
     def cumulative_proportion_bar_chart(self):
         """
@@ -369,7 +384,7 @@ class Graphics:
             for i, (prop, count) in enumerate(zip(props, sizes)):
                 if prop == 0:
                     continue  # skip zero-size segments
-                ax.bar(x_pos, prop, bar_width, bottom=bottom, color=colors[i], edgecolor=color)
+                ax.bar(x_pos, prop, bar_width, bottom=bottom, color=colors[i], edgecolor=colors[i])
 
                 # Add label inside each segment
                 y_center = bottom + prop / 2
@@ -403,4 +418,4 @@ class Graphics:
         ax.set_title(f'Distribution of Priorities' + (f"\n for {self.data_name} and {self.data2_name}" if self.overlay_plots else ""),
                     fontsize=24, color=self.cmap(1.0), weight='semibold')
 
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 1, 0.94])
