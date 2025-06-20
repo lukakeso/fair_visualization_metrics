@@ -321,4 +321,3 @@ class Data(object):
 if __name__ == '__main__':
     d = Data()
     print(d.FMMClassification_data)
-    

@@ -62,4 +62,3 @@ if __name__ == '__main__':
     gph.cumulative_proportion_bar_chart()
 
     plt.show()
-    

@@ -404,4 +404,3 @@ class Graphics:
                     fontsize=24, color=self.cmap(1.0), weight='semibold')
 
         plt.tight_layout()
-        
